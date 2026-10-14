@@ -47,9 +47,14 @@ class SingleLinkedList:
             current = current.next
         return count
     def travel(self):
-        pass
-    def add(self):
-        pass
+        current = self.head
+        while current:
+            print(current.item)
+            current = current.next
+    def add(self,item):
+        new_node = SingleNode(item)
+        new_node.next = self.head
+        self.head = new_node
     def append(self,item):
         pass
     def remove(self,item):
@@ -57,7 +62,7 @@ class SingleLinkedList:
     def search(self,item):
         pass
 if __name__ == '__main__':
-    node1 = SingleNode(10)
+    node1 = SingleNode("桑多涅")
     print(f"元素域：{node1.item}")
     print(f"链接域：{node1.next}")
     print(f"{type(node1)}")
@@ -65,7 +70,8 @@ if __name__ == '__main__':
     print(f"头节点：{my_list.head}")
     print(f"头节点的元素域：{my_list.head.item}")
     print(f"头节点的地址域：{my_list.head.next}")
-
     print(my_list.is_empty())
     print(my_list.length())
+    my_list.add("哥伦比亚")
+    my_list.travel()
 
