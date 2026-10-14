@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>模拟B站页面 - XPath练习</title>
+    <style>
+        /* CSS 部分：定义样式 */
+        :root {
+            --bg3: #f4f5f7; /* 模拟你截图中的 CSS 变量 */
+        }
+        body {
+            background-color: var(--bg3);
+            font-family: "Microsoft YaHei", sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        #app {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .bili-video-card__wrap {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+        }
+        .video-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #18191c;
+            margin: 0 0 10px 0;
+        }
+        .video-author {
+            font-size: 14px;
+            color: #9499a0;
+        }
+        .video-cover {
+            width: 120px;
+            height: 75px;
+            background-color: #e3e5e7;
+            border-radius: 4px;
+            margin-right: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #9499a0;
+        }
+    </style>
+</head>
+<body style="background-color: var(--bg3)">
+
+    <!-- 模拟你截图中的 browser-tip -->
+    <div class="browser-tip" style="display:none;">建议使用现代浏览器</div>
+
+    <!-- 核心内容区，对应截图中的 id="app" -->
+    <div id="app">
+        <!--[-->
+        <div class="bili-video-card__wrap __scale">
+            <div class="video-cover">封面图</div>
+            <div class="video-info">
+                <h3 class="video-title">Python 爬虫入门教程：XPath 实战</h3>
+                <div class="video-author">UP主: 编程学习君</div>
+            </div>
+        </div>
+        <!--]-->
+
+        <!--[-->
+        <div class="bili-video-card__wrap __scale">
+            <div class="video-cover">封面图</div>
+            <div class="video-info">
+                <h3 class="video-title">2024年最新前端开发趋势</h3>
+                <div class="video-author">UP主: 技术前沿</div>
+            </div>
+        </div>
+        <!--]-->
+    </div>
+
+    <!-- JavaScript 部分：模拟动态加载数据 -->
+    <script type="text/javascript">
+        // 模拟 B站页面底部的 JS 注入
+        window.__pinia = (function() {
+            console.log("模拟 Pinia 状态管理加载");
+            return {};
+        })();
+
+        // 动态添加一条数据，测试 Python 是否只能抓取静态源码
+        // (在真实的 Python requests 抓取中，这段 JS 不会被浏览器执行，所以第三条数据抓不到)
+        document.addEventListener("DOMContentLoaded", function() {
+            const app = document.getElementById("app");
+            const newCard = document.createElement("div");
+            newCard.className = "bili-video-card__wrap __scale";
+            newCard.innerHTML = `
+                <div class="video-cover">封面图</div>
+                <div class="video-info">
+                    <h3 class="video-title">JavaScript 动态生成的视频标题</h3>
+                    <div class="video-author">UP主: JS 引擎</div>
+                </div>
+            `;
+            app.appendChild(newCard);
+            console.log("动态数据已插入 DOM");
+        });
+    </script>
+</body>
+</html>

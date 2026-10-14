@@ -1,0 +1,35 @@
+#  while语句写法
+"""
+while 条件表达式：
+    循环体1
+    循环体2
+"""
+i=0
+while i<10:
+    i=i+1
+    print("hello python")  #没有i++ 这种写法
+else:
+    print("执行完毕")   #正常结束时才会打印else里的值
+
+#计算1 到100 之间的偶数
+i=1
+sum=0
+while i<=100:
+    if i%2==0:
+        sum=sum+i
+    i=i+1
+else:
+    print(sum)
+
+"""
+for 元素 in 待处理集：
+    循环体
+else：
+    循环结束的代码
+"""
+#遍历字符串 hello python
+msg=input("输入字符串：")
+for i in msg:
+    print(i)   #读完自动退出循环
+else:
+    print("输出完毕")

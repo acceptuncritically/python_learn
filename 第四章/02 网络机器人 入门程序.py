@@ -1,0 +1,33 @@
+import requests
+from lxml import html
+#定义URL
+target_url="https://www.tiobe.com/tiobe-index/"
+
+#发送请求
+#浏览器发送的请求都是get
+response = requests.get(target_url)
+# #输出数据到控制台
+# print(response.text)
+# #前端网页
+doc = html.fromstring(response.text)
+# 将response转换成文本状态fromstring才能识别
+# html.fromstring 是 Python 中 lxml 库提供的一个非常常用的函数。
+# 它的主要作用是将字符串格式的 HTML 代码转换成一个可被 XPath 解析的节点对象
+table_txt=doc.xpath("//table[@id='top20']/thead/tr/th/text()")
+print(table_txt)
+
+tr_txt=doc.xpath("//table[@id='top20']/tbody/tr")
+for tr in tr_txt:
+    td_txt=tr.xpath("./td/text()")
+    print(td_txt)
+
+#可以在浏览器开发者模式 元素 进行copy xpath路径
+"""
+html 超文本标记语言 由一堆预设的标签<h1> 一级标题</h1>构成 HTML负责网页的结构 页面元素与内容
+css 层叠样式表 负责网页样式 页面的外观 位置颜色 大小 <style>
+javascript 负责网页的交互
+html 不像记事本一样 比普通文本更强大 可以存储视频照片 并形成超链接
+其中的标签都是预定好的 <h1>表示标题 <img>展示照片 <video>展示视频
+HTML 代码直接在浏览器中运行，标签有浏览器解析 标签中的属性用key=value 的形式书写
+"""
+

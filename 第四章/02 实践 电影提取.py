@@ -1,0 +1,67 @@
+import requests
+from lxml import html
+import csv
+
+
+MOVIE_LIST_FILE="csv_data/movie_list.csv"
+TMDB_BASE_URL="http://www.themoviedb.org/"
+TMDB_TOP_URL="https://www.themoviedb.org/movie/top-rated"
+
+def save_all_movies(all_movies):
+    with open(MOVIE_LIST_FILE, "w", encoding="utf-8",newline="") as f:
+        writer=csv.DictWriter(f, fieldnames=["电影名","年份","上映时间","类型","时长","评分","语言","导演","作者","宣传语","简介"])
+        writer.writerows(all_movies)
+def get_movie_info(movie_info_url):
+    response = requests.get(movie_info_url)
+    movie_doc=html.fromstring(response.text)
+    movie_names=movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[1]/div/span[0]/text()")
+    movie_years=movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[1]/div/span[1]/text()")
+    movie_dates = movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[1]/div/span[2]/text()") # 上映时间
+    movie_tags = movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[1]/div/span[3]/a/text()") # 类型
+    movie_cost_times = movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[1]/div/span[4]/text()") # 时长
+    movie_scores = movie_doc.xpath("//*[@id='consensus_pill']/div/div[1]/div/div/@data-percent") # 评分
+    movie_languages = movie_doc.xpath("//*[@id='media_v4']/div/div/div[2]/div/section/div[1]/div/section[1]/p[3]/text()") #
+    movie_directors = movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[3]/ol/li[1]/p[1]/a/text()") # 导演
+    movie_authors = movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[3]/ol/li[2]/p[1]/a/text()") # 作者
+    movie_slogans = movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[3]/h3[1]/text()") # 宣传语
+    movie_descriptions = movie_doc.xpath("//*[@id='original_header']/div[2]/section/div[3]/div/p/text()") # 简介
+
+    # 3. 返回电影详情 - 字典
+    movie_info = {
+        "电影名": movie_names[0].strip() if movie_names else '',
+        "年份": movie_years[0].strip() if movie_years else '',
+        "上映时间": movie_dates[0].strip() if movie_dates else '',
+        "类型": ",".join(movie_tags) if movie_tags else '',
+        "时长": movie_cost_times[0].strip() if movie_cost_times else '',
+        "评分": movie_scores[0].strip() if movie_scores else '',
+        "语言": movie_languages[0].strip() if movie_languages else '',
+        "导演": ",".join(movie_directors) if movie_directors else '',
+        "作者": ",".join(movie_authors) if movie_authors else '',
+        "宣传语": movie_slogans[0].strip() if movie_slogans else '',
+        "简介": movie_descriptions[0].strip() if movie_descriptions else ''}
+    return movie_info
+# 主函数，定义核心逻辑
+def main():
+    # 1.发送请求，获取高分电影榜单数据
+    response = requests.get(TMDB_TOP_URL, timeout=60)
+
+    # 2.解析数据，获取电影列表
+    document = html.fromstring(response.text)
+    movie_list = document.xpath("//*[@id='page_1']/div[@class='card style_1']")
+
+    # 3.遍历电影列表，获取电影详情
+    all_movies = []
+    for movie in movie_list:
+        movie_urls = movie.xpath("./div/div/a/@href")
+        if movie_urls:
+            # 电影详情的url
+            movie_info_url = TMDB_BASE_URL + movie_urls[0]
+            # 发送请求，获取电影详情数据
+            movie_info = get_movie_info(movie_info_url)
+            all_movies.append(movie_info)
+
+    # 4.保存数据，保存为 csv 文件
+    save_all_movies(all_movies)
+
+if __name__ == '__main__':
+    main()

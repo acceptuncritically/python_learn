@@ -1,0 +1,54 @@
+"""
+1. 添加购物车：用户根据提示录入商品名称、以及该商品的价格、数量，保存该商品信息到购物车。
+2. 修改购物车：要求用户输入要修改的购物车商品名称，然后再提示输入该商品的价格、数量，输入完成后修改该商品信息。
+3. 删除购物车：要求用户输入要删除的购物车名称，根据名称删除购物车中的商品。
+4. 查询购物车：将购物车中的商品信息展示出来，格式为："商品名称：xxx，商品价格：xxx，商品数量：xxx"。
+5. 退出购物车
+"""
+a="""#####################
+#    1.添加购物车   #
+#    2.修改购物车   #
+#    3.删除购物车   #
+#    4.查询购物车   #
+#    5.退出购物车   #
+######################
+"""
+print(a)
+shopping_cart ={}
+while True:
+    choice = int(input("请输入要执行的操作（1~5）："))
+    match choice:
+        case 1:
+            goods_name = input("请输入商品名字：")
+            goods_price = float(input("请输入商品价格："))
+            goods_num = int(input("请输入商品数量："))
+            if goods_name not in shopping_cart:
+                shopping_cart[goods_name] = {"price": goods_price, "num": goods_num}
+            else:
+                print("商品已存在，请重新选择")
+        case 2:
+            goods_name = input("请输入商品名字：")
+            if goods_name not in shopping_cart:
+                print("该商品不存在，请重新输入")
+                continue
+            else:
+                goods_price = float(input("请输入商品价格："))
+                goods_num = int(input("请输入商品数量："))
+                shopping_cart[goods_name] = {"price":goods_price,"num":goods_num}
+        case 3:
+            goods_name = input("请输入商品名字：")
+            if goods_name not in shopping_cart:
+                print("商品不存在，请重新选择")
+            else:
+                del shopping_cart[goods_name]
+                print("商品删除完毕")
+        case 4:
+           for goods_name in shopping_cart.keys():
+               info=shopping_cart[goods_name]
+
+               print(f"商品名称：{goods_name},商品价格：{info["price"]},商品数量{info["num"]}")
+        case 5:
+            break
+        case _:
+            print("输入内容有问题，请重新输入")
+

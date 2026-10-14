@@ -1,0 +1,112 @@
+# # x=float(input("输入x："))
+# # if x<1:
+# #     y=x
+# # elif 1<=x<10:
+# #     y=2*x-1
+# # else:
+# #     y=3*x-11
+# # print(y)
+#
+# # x=float(input(""))
+# # if x>=0:
+# #     y=x
+# # elif x<0:
+# #     y=-x
+# # print(round(y,2))
+#
+# # a=int(input(""))
+# # if a%2==0:
+# #     print("even")
+# # else:
+# #     print("odd")
+#
+# #将字符转换为ASCII
+# # a=input("")
+# # if ord(a)%2==0:
+# #     print("NO")
+# # else:
+# #     print("YES")
+# #
+# """
+# map(int, input().split())：
+# 这是 Python 读取一行多个数字的惯用写法。input().split() 会按空格把输入切成列表 ['5', '3']，
+# map(int, ...) 将它们转换为整数，最后解包赋值给 x 和 y。
+# """
+#
+# # c=0
+# # a=int(input())
+# # ages=list(map(int,input().split()))
+# # for i in range(0,a):
+# #     c=ages[i]+c
+# # print(f"{c/a:.2f}")
+#
+# # cnt=0
+# # c=0
+# # while cnt<12:
+# #     cnt+=1
+# #     a=input("")
+# #
+# #     c+=float(a)
+# # avg=c/12
+# # print(f"${avg:.2f}")
+#
+# # c=0
+# # a=int(input())
+# # b=list(map(int,input().split()))
+# # for i in b:
+# #     c+=i
+# # print(c//a)
+#
+# # c=0
+# # a=int(input())
+# # b=list(map(int,input().split()))
+# # for i in b:
+# #     c+=i
+# # print(f"{c} {c/a:.5f}")
+# zong,jin,yin,tong=0,0,0,0
+# a=int(input())
+# for i in range(a):
+#     b = list(map(int, input().split()))
+#     zong+=b[0]+b[1]+b[2]
+#     jin+=b[0]
+#     yin+=b[1]
+#     tong+=b[2]
+#     print(jin,yin,tong,zong)
+
+# def check_prime(number):
+#     flag = 0
+#     # 循环
+#     for i in range (2,number):
+#         # 判断 i是否能整除 number
+#         # 如果能整除，将flag设置为1
+#         if number%i==0:
+#             flag=1
+#
+#     # 根据flag的值，判断是否是质数
+#     if flag==1:
+#         print("非质数")
+#     else:
+#         print("质数")
+#
+# number = int(input())
+# 调用函数
+# check_prime(number)
+
+# my_list = [1, 2, 3, 4]
+# # 反转列表 并打印新列表
+# my_list.reverse()
+# print(my_list)
+
+# 请在 ___ 划线处，替换成你的代码
+
+# 创建字典
+A = {12: 'Kathmandu', 11: 'London', 3: 'Sydney'}
+B = {10: 'New York', 2: 'Delhi'}
+
+# 合并字典
+def update(dict1, dict2):
+    c=dict1.update(dict2)
+    return dict1,c
+
+# 打印结果
+print(update(A, B))

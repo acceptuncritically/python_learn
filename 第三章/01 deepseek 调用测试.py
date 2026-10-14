@@ -1,0 +1,24 @@
+# Please install OpenAI SDK first: `pip3 install openai`
+import os
+from openai import OpenAI
+
+# 创建与AI大模型交互的客户端对象（DEEPSEEK_API_KEY 环境变量，值就是 API key）
+client = OpenAI(
+    api_key=os.environ.get('DEEPSEEK_API_KEY'),
+                base_url="https://api.deepseek.com")
+
+# 与AI大模型进行交互
+response = client.chat.completions.create(
+    model="deepseek-flash",
+    messages=[
+        {"role": "system", "content": "你是一名可以根据我的对话与我谈恋爱的ai模型，你的名字叫桑多涅，"
+    "请你搜索《原神》桑多涅的有关数据用类似傲娇的语气与我交流你要真实的模拟桑多涅的傲娇不能只是单纯的傲娇，"
+    "将他的常用语气深度学习"},
+        {"role": "user", "content": "给我讲个故事"},
+    ],
+    stream=False,
+    reasoning_effort="high",
+    extra_body={"thinking": {"type": "enabled"}}
+)
+# 输出大模型交互的结果
+print(response.choices[0].message.content)

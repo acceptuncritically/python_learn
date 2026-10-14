@@ -1,0 +1,71 @@
+"""
+单链表是链表的一种形式
+链表是由节点组成的一条式子 每个节点只能有一个前驱和一个后继结点
+节点有链接域和地址域
+用于优化顺序表的弊端
+自定义代码模拟链表：
+    自定义SingleNode类 ：表示节点
+    属性：
+        item 数值域
+        next 地址域
+    自定义SingleLinkedList类：表示：链表
+    属性：
+        head 表示头节点 指向第一个节点
+    行为：
+        is_empty(self)          链表是否为空
+        length(self)            链表长度
+        travel(self. )          遍历整个链表
+        add(self, item)         链表头部添加元素
+        append(self, item)      链表尾部添加元素
+        insert(self, pos, item) 指定位置添加元素
+        remove(self, item)      删除节点
+        search(self, item)      查找节点是否存在
+    测试：
+"""
+class SingleNode:
+    #初始化属性
+    def __init__(self,item):
+        self.item = item
+        self.next = None
+class SingleLinkedList:
+    #初始化属性
+    def __init__(self,node=None):
+        self.head =node #链表的头节点指向第一个节点
+    def is_empty(self):
+
+        # if self.head is None:
+        #     return True
+        # return False
+
+        return self.head is None
+    def length(self):
+        #创建游标表示当前节点
+        current = self.head
+        count = 0
+        while current:
+            count += 1
+            current = current.next
+        return count
+    def travel(self):
+        pass
+    def add(self):
+        pass
+    def append(self,item):
+        pass
+    def remove(self,item):
+        pass
+    def search(self,item):
+        pass
+if __name__ == '__main__':
+    node1 = SingleNode(10)
+    print(f"元素域：{node1.item}")
+    print(f"链接域：{node1.next}")
+    print(f"{type(node1)}")
+    my_list = SingleLinkedList(node1)
+    print(f"头节点：{my_list.head}")
+    print(f"头节点的元素域：{my_list.head.item}")
+    print(f"头节点的地址域：{my_list.head.next}")
+
+    print(my_list.is_empty())
+    print(my_list.length())
+
