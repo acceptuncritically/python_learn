@@ -1,4 +1,4 @@
-def inseret_sort(my_list):
+def insert_sort(my_list):
     n=len(my_list)
     for i in range(1,n):
         for j in range(i,0,-1):
@@ -7,5 +7,6 @@ def inseret_sort(my_list):
             else:
                 break
     return my_list
+# 最坏o(n²) 最优o(n)
 my_list=[5,3,4,1]
-print(inseret_sort(my_list))
+print(insert_sort(my_list))
