@@ -3,12 +3,9 @@ class Node:
         self.data = data
         self.lchild = None
         self.rchild = None
-
-
 class BinaryTree:
     def __init__(self, node=None):
         self.root = node
-
     def add(self, item):
         node = Node(item)
         if self.root is None:
@@ -40,10 +37,9 @@ class BinaryTree:
                 queue.append(node.lchild)
             if node.rchild:
                 queue.append(node.rchild)
-
-
 if __name__ == '__main__':
-    bt = BinaryTree(Node("桑多涅"))
+    bt = BinaryTree()
+    bt.add("桑多涅")
     bt.add("哥伦比亚")
     bt.add("爱可菲")
     bt.add("菲谢尔")
