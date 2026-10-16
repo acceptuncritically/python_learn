@@ -7,23 +7,23 @@ class BinaryTree:
     def __init__(self, node=None):
         self.root = node
     def add(self, item):
-        node = Node(item)
+        new_node = Node(item)
         if self.root is None:
-            self.root = node
+            self.root = new_node
             return
         queue = [self.root]
-        while queue:
-            cur = queue.pop(0)
-            if cur.lchild is None:
-                cur.lchild = node
+        while True:
+            cur_node = queue.pop(0)
+            if cur_node.lchild is None:
+                cur_node.lchild = new_node
                 return
             else:
-                queue.append(cur.lchild)
-            if cur.rchild is None:
-                cur.rchild = node
+                queue.append(cur_node.lchild)
+            if cur_node.rchild is None:
+                cur_node.rchild = new_node
                 return
             else:
-                queue.append(cur.rchild)
+                queue.append(cur_node.rchild)
 
     def travel(self):
         """按广度遍历整个内容"""
