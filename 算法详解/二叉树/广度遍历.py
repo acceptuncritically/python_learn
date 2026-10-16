@@ -24,7 +24,6 @@ class BinaryTree:
                 return
             else:
                 queue.append(cur_node.rchild)
-
     def travel(self):
         """按广度遍历整个内容"""
         if self.root is None:
