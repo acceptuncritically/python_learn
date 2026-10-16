@@ -7,6 +7,7 @@ def quick_sort(my_list, start, end):
     mid=my_list[start]
     #具体的查找过程 只要left比right小就一直找
     while left < right:
+        #必须先左再右，左边已经有一个坑了 要从右边先找把坑填上
         while my_list[right] >= mid and left < right:
             right-=1
         #走到这里说明my_list[right]比分界值小，放左侧
