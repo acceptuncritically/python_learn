@@ -19,13 +19,13 @@ class Student:
         self.age =18
         # 提供公共的访问方式
     @property
-    def get_age(self):
+    def age(self):
         return self.__age
-    @get_age.setter
-    def set_age(self,age):
+    @age.setter
+    def age(self,age):
         # 可以在这里进行判断
         self.__age=age
 if __name__ == '__main__':
     student=Student()
-    student.set_age=18
-    print(student.get_age)
+    student.age=18
+    print(student.age)
