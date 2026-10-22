@@ -1,3 +1,18 @@
+"""
+  1  导入langchain里的 FewShotPromptTemplate 用来定义一个管理类 用它去管理每一个小的个体
+                    PromptTemplate 用来定义一个个体类
+    导入deepseek 要接入的大语言模型的包
+  2  PromptTemplate 用来定义一个小模版，
+     FewShotPromptTemplate 用来定义大模板装有多个小模版
+        1.example_prompt 装里面的PromptTemplate定义的小模版
+        2.examples 用列表套字典的方式 达到多个小模版的效果
+        3.prefix 在示例模板之前的提示词
+        4.suffix 在示例之后的提示词 在提示词中用变量名来输入想问的具体示例
+        5.input_variables 在suffix里的变量名，用列表的方式存储
+  3. 提示词模板调用invoke方法(input={"input_word":"左"}).to_string() 用字典形式传入input_variables的值
+  4.调用大语言模型 ChatDeepSeek(model="deepseek-chat", temperature=0.7) temperature表示大语言模型的保守程度
+  5. 大语言模型调用invoke(input=将3的结果传入进来).content 输出模型回答的内容
+"""
 # 1. 导入通用模板（永远来自 langchain_core）
 from langchain_core.prompts import FewShotPromptTemplate,PromptTemplate
 
