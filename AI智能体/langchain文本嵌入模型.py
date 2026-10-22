@@ -1,4 +1,13 @@
-
+"""
+    1.导入langchain_openai包
+    2.使用包中的OpenAIEmbeddings模块 (用来将数据转换成多维向量)
+            1.使用数据转换的模型
+            2.导入API_KEY
+            3.传入模型的base网址
+            用变量接收
+    3.将接收的变量 通过embed_query()传入字符串 进行一次操作
+                或  embed_documents()传入列表套字符串的方式，一次性处理多段数据
+"""
 """将字符串作为输入，返回一个浮点数的列表
 由于deepseekAPI不提供将数据转化为向量的模型，所以用GLM
 """
