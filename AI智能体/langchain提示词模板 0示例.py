@@ -1,3 +1,11 @@
+"""
+    1  导入langchain里的PromptTemplate 用来定义一个个体类
+       导入deepseek 要接入的大语言模型的包
+    2. 调用大语言模型
+    3.  PromptTemplate 用from_template方法定义一个小模版，里面含有占位词，用来传入想改变的提示词
+    4.  将提示词模板 用format方法 传入提示词模板中的占位词
+    5.  大语言模型使用invoke方法将模板传进来 并输出返回的结果
+"""
 # 1. 导入通用模板（永远来自 langchain_core）
 from langchain_core.prompts import PromptTemplate
 

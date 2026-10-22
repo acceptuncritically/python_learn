@@ -2,7 +2,7 @@
   1  导入langchain里的 FewShotPromptTemplate 用来定义一个管理类 用它去管理每一个小的个体
                     PromptTemplate 用来定义一个个体类
     导入deepseek 要接入的大语言模型的包
-  2  PromptTemplate 用来定义一个小模版，
+  2  PromptTemplate 用from_template方法定义一个小模版，
      FewShotPromptTemplate 用来定义大模板装有多个小模版
         1.example_prompt 装里面的PromptTemplate定义的小模版
         2.examples 用列表套字典的方式 达到多个小模版的效果
