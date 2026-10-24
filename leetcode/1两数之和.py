@@ -19,14 +19,13 @@ class Solution:
     def twoSum(self, nums: list[int], target: int) -> list[int]:
         num_to_index = {}  # 字典：记录【元素值 : 索引】
         for i, num in enumerate(nums):
-            # enumerate包含当前索引和当前数字，是内置的函数库
-            complement = target - num  # 需要的另一个数
+            complement = target - num
             # 判断补数是否在我们的字典里（说明前面遍历过）
             if complement in num_to_index:
                 return [num_to_index[complement], i]
             # 如果不在，把当前数和索引存进去，供后面的数匹配
             num_to_index[num] = i
-        return []
+
 
 # class Solution:
 #     def twoSum(self, nums: list[int], target: int) -> list[int]:
