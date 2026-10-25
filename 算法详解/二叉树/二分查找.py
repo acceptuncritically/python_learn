@@ -8,7 +8,7 @@ def binary_search(my_list,number):
         elif my_list[mid]>number:
             end=mid-1
         else:
-            return True
+            return mid
     return False
 if __name__=='__main__':
     my_list=[1,2,4,5,6]
