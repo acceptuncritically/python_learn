@@ -134,7 +134,8 @@ key=len
 # --------------------------------------
 # def reverse_binary_integer(n):
 #     # 此处编写你的代码
-#     a = format(n, 'b')
+a = format(16, '0x')
+print(a)
 #     s = a[::-1]
 #     return int(s, 2)
 a="""
@@ -286,17 +287,17 @@ int（字符串，进制数） 进制数表示当前字符串的数字的进制�
 # # 调用函数
 # print(repetitions_in_string(test_string))
 # -----------------------------------------------
-def is_heterogram(s):
-    # 此处编写代码
-    s1=s.split(" ")
-    list1=list(''.join(s1))
-    for i in list1:
-        if list1.count(i)>1:
-            return "No"
-    else:
-        return "Yes"
-# 获取输入
-input_string = input()
-
-# 调用函数，输出结果
-print(is_heterogram(input_string))
+# def is_heterogram(s):
+#     # 此处编写代码
+#     s1=s.split(" ")
+#     list1=list(''.join(s1))
+#     for i in list1:
+#         if list1.count(i)>1:
+#             return "No"
+#     else:
+#         return "Yes"
+# # 获取输入
+# input_string = input()
+#
+# # 调用函数，输出结果
+# print(is_heterogram(input_string))
