@@ -1,6 +1,17 @@
 """
-numpy对象-->张量tensor-->数据库对象tensordataset-->数据加载器dataloader
+numpy对象-->张量tensor-->数据集对象tensordataset-->数据加载器dataloader
 现在是自己创造的数据可以看到标准w值 而在真实数据中 并不知道其中的w值 所以会减小loss值 相当于逼近真实w
+numpy 数据
+→ Tensor 张量
+→ TensorDataset 数据集对象
+→ DataLoader 小批量加载器
+→ nn.Linear 线性模型
+→ MSELoss 损失函数
+→ SGD 优化器
+→ 前向传播、计算损失、反向传播、更新参数
+→ 观察 loss 和拟合直线
+"""
+"""
 """
 import torch
 from torch.utils.data import TensorDataset  # 构造数据集对象
@@ -16,42 +27,62 @@ plt.rcParams['axes.unicode_minus'] = False # 用来正常显示负号
 
 #定义函数创建线性回归样本数据
 def create_dataset():
+    """
+    用来模拟数据集，加上随机种子，保证每次生成的数据一样
+    用来作为下面操作的数据
+    :return:
+    """
+    # x的形状 = (n_samples, n_features)
+    # 单目标回归：y形状 = (n_samples,)
+    # 多目标回归：y形状 = (n_samples, n_targets)
     x,y,coef=make_regression(
         n_samples=100,  #100条样本点
         n_features=1,  #一个特征点
         noise=10,       #噪声越大 样本点越散
-        coef=True,      #是否返回系数 默认为False 返回值为None
+        coef=True,      #是否返回系数 默认为False 返回值为None  coef 是真实权重
         bias=14,        #偏置
         random_state=3    #随机种子 随机种子相同 输出数据相同
     )
+    #y = coef * x + 14 + 噪声
     #此时为ndarray
     # print(type(x))
-    #将numpy数据封装为tensor对象
+    #将numpy数据封装为tensor对象 下面的训练需要转换为张量
     x=torch.tensor(x,dtype=torch.float)
     y=torch.tensor(y,dtype=torch.float)
     # 返回参数
     return x,y,coef
 def train(x,y,coef):
+    """
+    通过设置数据集对象将每一个猜测与答案放在一个容器中，然后DataLoader将这每一个容器，以batch_size为参数
+    控制发送大小，shuffle表示发送前将整个加载器里已经封装好的内容重新打乱
+    :param x:所有样本的特征
+    :param y:所有样本的标准答案
+    :param coef:真实的w
+    :return:
+    """
     # numpy对象 -->张量tensor -->数据库对象tensordataset -->数据加载器dataloader
     dataset=TensorDataset(x,y)
-    #参1 数据集对象 参2 批次大小 参3 是否打乱数据 (训练集打乱 测试集不打乱)
+        #参1 数据集对象 参2 批次大小 参3 是否打乱数据 (训练集打乱 测试集不打乱)
     dataloader=DataLoader(dataset,batch_size=10,shuffle=True)
     #创建出事的线性回归模型
-    #参1 表示输入的维度 参2 表示输出的维度
+        #参1 表示输入的维度 参2 表示输出的维度  内部包含w b
+        # 用模型来计算 y_pred = w * x + b
     model=nn.Linear(1,1)
     #创建损失函数对象
     critertion=nn.MSELoss()
     #创建优化器对象
-    #参1 表示模型参数 参2 表示学习率
+        #告诉模型你要修改的对象 和学习率
+        #参1 表示模型参数 参2 表示学习率
     optumizer=optim.SGD(model.parameters(),lr=0.01)
     #具体的训练过程
-    #定义变量分别表示 训练轮数 每轮的(平均)损失值 训练总损失值 训练的样本数
+        #定义变量分别表示 训练轮数 每轮的(平均)损失值 训练总损失值 训练的样本数
     epochs,loss_list,total_loss,total_sample=100,[],0.0,0
     #开始训练 按轮训练
     for epoch in range(epochs):
         #每轮是分批次训练的 所以从加载器中 获取 批次数据
+        #将原本的x，y换了个名 为train_x,train_y
         for train_x,train_y in dataloader:
-            #模型的预测
+            #模型的预测 用先前定义的nn.Linear对象 内部会自动执行前向传播
             y_pred=model(train_x)
             #计算每批损失值
             loss=critertion(y_pred,train_y.reshape(-1,1))#将train_y转成 n行1列
