@@ -12,6 +12,13 @@ numpy 数据
 → 观察 loss 和拟合直线
 """
 """
+1.导入 构建数据集,数据加载器,nn函数,优化器的包
+2.创建一个数据集用来模拟真实数据的整合 里面设置的的结果为 y=wx+b 其中w(coef)和b都是人为的数据并将x y转换为张量输出
+3.将返回的x y封装到数据集中，用DataLoader形成数据加载器
+4.nn.Linear用来表示线性计算 nn.MSELoss用来计算真实与预测的差值 并创建SGD优化器对象
+5.开始正常的训练，每轮从加载器中拿出数据 把其中的数据用模型预测其结果 并计算损失值 将每轮损失值记录到列表中
+6.梯度清零+反向传播+梯度更新
+7.分别计算预测y和真实y 并将其制成两张图
 """
 import torch
 from torch.utils.data import TensorDataset  # 构造数据集对象
@@ -60,7 +67,7 @@ def train(x,y,coef):
     :param coef:真实的w
     :return:
     """
-    # numpy对象 -->张量tensor -->数据库对象tensordataset -->数据加载器dataloader
+    # numpy对象 -->张量tensor -->数据集对象Tensordataset -->数据加载器dataloader
     dataset=TensorDataset(x,y)
         #参1 数据集对象 参2 批次大小 参3 是否打乱数据 (训练集打乱 测试集不打乱)
     dataloader=DataLoader(dataset,batch_size=10,shuffle=True)
@@ -76,9 +83,10 @@ def train(x,y,coef):
     optumizer=optim.SGD(model.parameters(),lr=0.01)
     #具体的训练过程
         #定义变量分别表示 训练轮数 每轮的(平均)损失值 训练总损失值 训练的样本数
-    epochs,loss_list,total_loss,total_sample=100,[],0.0,0
+    epochs,loss_list=100,[]
     #开始训练 按轮训练
     for epoch in range(epochs):
+        total_loss, total_sample=0.0,0
         #每轮是分批次训练的 所以从加载器中 获取 批次数据
         #将原本的x，y换了个名 为train_x,train_y
         for train_x,train_y in dataloader:
@@ -108,9 +116,10 @@ def train(x,y,coef):
     #绘制真实值和样本值之间的关系
     #绘制样本点分布情况
     plt.scatter(x,y)#画样本点的位置
-    y_pred=torch.tensor(data=[v*model.weight+model.bias for v in x])
+    y_pred = model(x).detach().squeeze()
+    # y_pred=torch.tensor(data=[v*model.weight+model.bias for v in x])
     #计算真实值
-    y_true=torch.tensor(data=[v*coef+14 for v in x])
+    y_true=torch.tensor(data=[v*float(coef)+14 for v in x])
     #绘制真实值和预测值的折线图
     plt.plot(x,y_pred,color="red",label="预测值")
     plt.plot(x,y_true,color="darkblue",label="真实值")
