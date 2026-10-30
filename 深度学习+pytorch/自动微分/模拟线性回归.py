@@ -1,6 +1,7 @@
 """
 numpy对象-->张量tensor-->数据集对象tensordataset-->数据加载器dataloader
 现在是自己创造的数据可以看到标准w值 而在真实数据中 并不知道其中的w值 所以会减小loss值 相当于逼近真实w
+数据准备（Dataset/DataLoader） -> 模型定义（nn.Linear） -> 损失函数（MSELoss） -> 优化器（SGD） -> 训练循环（前向、反向、更新）
 numpy 数据
 → Tensor 张量
 → TensorDataset 数据集对象
