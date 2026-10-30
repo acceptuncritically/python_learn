@@ -20,3 +20,4 @@ prompt=PromptTemplate.from_template(
 chain=prompt|model|parser|model
 res:AIMessage=chain.invoke({"lastname":"芦", "gender":"女儿"})
 print(res.content)
+#也可以不调用content 在chain后在链一个parser转为字符串
