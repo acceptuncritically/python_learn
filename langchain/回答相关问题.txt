@@ -1,0 +1,85 @@
+1PromptTemplate 适用于单一对话，ChatPromptTemplate适用于长文本多次交流， 应使用ChatPromptTemplate
+2 导入模型类，通用提示模板PromptTemplate类和 FewShotPromptTemplate模板，
+  在其中的前后参数中添加之前的对话并规定输出内容的格式，最后调用invoke方法得到结果
+3 首先可以要求模型不输出markdown代码块 而采用基础代码来表示 数学函数等内容 JsonOutParser并不能处理返回结果，应该能用正则之类限制输出内容
+  来保证json干净
+4 相当于链的合并 将|前的输出内容直接传到|后的模块中 我不知道如何自动传递的
+5 要确保前一个的输出和函数的输入类型一致，函数的输出与下一个的输入类型一致 函数输入是字符串可以通过PromptTemplate的方法将字符串转化为PromptTemplate
+  类型 并将其传递给函数
+6 调用stream方法 或者在使用模块的时候将其中的stream参数设置为True invoke是直接获取所有结果，stream在获取时需要加入for循环将内容一点点获取
+  并将其中设置参数end="" 和flash=True
+7 临时记忆是在调用InMemoryChatMessageHistory然后在外部存储，长期记忆是调用RunnableWithMessageHistory 并将获取到的内容转成字典列表的形式存储
+  在内部的数据库里 超出token限制 可以本地部署模型 通过chroma在本地直接保存
+8 有一个可以同时处理图片型pdf和文字型pdf的模块但我没有学
+9 因为在获取大模型的数据时，要通过计算大模型的内容和传输的内容的向量夹角的大小 来判断两个向量的相似程度进而给出
+  最接近输入内容的回答
+10 先提示词 将提示词通过embedding模型转换为张量再通过InMemoryVectorStore将张量转换为向量数据库，
+   然后在向量库中调用similarity_search找到与内容最相近的几个回答并输出 相似向量的检索应该最消耗token 将内容转换为向量依赖于选择的embedding模型
+11导入csv包 open读取 将内容放在智普embedding模型中 再通过InMemoryVectorStore存入向量库 调用similarity_search方法得到最接近的内容将其封装为prompt
+  调用deepseek 通过链prompt|model|StrOutputParser 并获取其返回结果打印输出
+请根据我做出题目的回答得到我的学习程度并回答我内容里的问题，再将每道题目的答案输出 并给我学习建议和路径
+在你学习“提示词模板”时，PromptTemplate 和 ChatPromptTemplate 有什么区别？如果是用于构建类似 ChatGPT 的多轮对话，应该使用哪一个？
+
+【代码实现】Few-Shot 提示词
+如何利用 LangChain 构建一个带有“少样本（Few-Shot）”示例的提示词，让模型学会你想要的特定输出格式？请简述核心类或组件的用法。
+【实战应用】JSON 输出解析器
+在 19json解释器并完成... 中，你尝试让模型输出 JSON。请问如果模型返回的字符串包含 Markdown 代码块（如 ```json ... ```），JsonOutputParser 能自动处理吗？如果不能，你会如何利用 StrOutputParser 配合其他方式（如正则）来确保拿到干净的 JSON 数据？
+二、 LCEL 表达式语言与链 (Chains & LCEL)
+对应你的文件：03、07、10、15、20
+
+【核心机制】“或运算符的重写”
+你的文件 15 或运算符的重写.py 中，|（管道符）在 LangChain（LCEL）中起到了什么作用？它是如何将前一个组件的输出自动传递给下一个组件的输入的？
+
+【自定义组件】加入自定义函数
+在 20自定义函数加入链... 中，如果你写了一个普通的 Python 函数（例如 def process(text): return text.upper()），如何将它无缝加入到 LCEL 的链式调用中？需要用到哪个核心类？
+
+【性能优化】流式输出
+在 10 流式输出.py 中，如何配置链让 OpenAI 的响应做到打字机效果的流式输出？对于普通调用（.invoke()）和流式调用（.stream()），在代码结构上有什么不同？
+
+三、 记忆管理 (Memory)
+对应你的文件：21、22
+
+【场景区分】临时记忆 vs 长期记忆
+你实现了 21 memory临时记忆 和 22 memory长期记忆。请描述一下：
+
+临时记忆（如 ConversationBufferMemory）在 LangChain 中是如何存储上下文对话的？
+
+如果要实现长期记忆（超出 Token 限制还能记得以前的事），通常需要结合什么技术（提示：联系你的 RAG 和向量库知识点）？
+
+四、 数据加载与 RAG (Document Loaders & RAG)
+对应你的文件：02、06、23、24、25、26、27、28
+
+【数据加载】Loader 的选择
+现在你需要处理一个包含文字、表格和图片的复杂 PDF 文件，单纯使用 PyPDFLoader 可能会丢失表格结构。在 LangChain 中，你还可以考虑使用哪些更高级的 Loader 或者第三方库来配合提取内容？
+
+【原理理解】余弦相似度
+在 06 余弦相似度.py 中，为什么在向量检索时要计算余弦相似度？它衡量的是两个向量在什么维度上的关系？
+
+【RAG 全流程】
+结合 02RAG、27 内存向量存储 和 28 基于向量检索构建，请梳理一下一个完整的 RAG（检索增强生成）系统的全流程。在这个过程中，哪一步最消耗 Token？哪一步最依赖你选用的 Embedding 模型？
+
+五、 综合实战题（思考题）
+【组合拳】
+请设计一个逻辑链：读取本地的 CSV 文件 -> 将数据存入内存向量库 -> 用户输入问题 -> 根据问题进行向量检索 -> 将检索到的上下文和用户问题组装成 Prompt -> 调用 LLM（接入 DeepSeek）-> 使用字符串解析器输出结果并支持流式打印。请列出大致的 LangChain 代码结构（伪代码即可）。
+提示词模板的区别
+标准案：PromptTemplate 用于纯文本补全模型（输入输出都是字符串）；ChatPromptTemplate 用于对话模型（输入是消息列表 List[BaseMessage]）。构建多轮对话必须用 ChatPromptTemplate。
+2. Few-Shot 提示词
+标准答案：使用 FewShotPromptTemplate。核心包含：examples（示例字典列表）、example_prompt（每个示例的格式模板）、prefix（前缀）、suffix（最终用户的问题后缀）。
+3. JSON 解析器处理 Markdown
+标准答案：JsonOutputParser 不能完美处理带 Markdown 的代码块。解决方案：① 在 Prompt 中严格要求模型“仅输出纯 JSON，不要包含 ```json 等 Markdown 标记”；② 使用 RegexParser 或 Python 原生正则替换掉无关字符；③ 使用 OutputFixingParser（调用第二次 LLM 修复错误）。
+4. LCEL 管道符 | 的作用
+标准答案：| 是 LCEL 的语法糖。它将前一个 Runnable 的输出作为后一个 Runnable 的输入。底层通过重写 __or__ 方法，实现了链式调用和自动数据流传递。
+5. 自定义函数加入链
+标准答案：使用 RunnableLambda 包装普通函数（RunnableLambda(func)），即可让该函数拥有 invoke、stream 等方法并接入 LCEL 链中。如果是多个输入合并，可以用 RunnablePassthrough.assign。
+6. 流式输出
+标准答案：在 LLM 初始化时设置 streaming=True。调用链时使用 .stream(input)，然后通过 for chunk in chain.stream(): print(chunk, end="", flush=True) 实现打字机效果。
+7. 临时记忆与长期记忆
+标准答案：临时记忆（如 BufferMemory）存在于内存中，会话结束即销毁；长期记忆需要持久化（如存 Redis/DB），并且对于超长记忆，通常采用摘要记忆（Summary）或向量检索记忆（存历史对话的向量，按需召回）。
+8. 复杂 PDF 处理
+标准答案：PyPDFLoader 不够用。处理带表格和图片的 PDF，建议用 UnstructuredPDFLoader（支持结构化提取），或先用 PyMuPDF 提取图片，结合 OCR 技术（如 RapidOCR / Tesseract）识别文字，再喂给大模型。
+9. 余弦相似度
+标准答案：衡量两个向量在方向上的夹角，夹角越小（余弦值越接近 1），代表语义越相似。
+10. RAG 全流程与 Token
+标准答案：流程：文档加载 -> 文本分割 -> 向量化(Embedding) -> 存入向量库 -> 用户提问向量化 -> 相似度检索（Top-K） -> 组装 Prompt -> 送 LLM 生成。最耗 Token 的是“组装 Prompt 后送给 LLM”这一步（因为包含了检索到的庞大上下文）。Embedding 模型直接决定了检索的召回质量。
+11. 综合伪代码逻辑
+标准答案：逻辑完全正确。你的 prompt | model | StrOutputParser() 完美体现了 LCEL 思想。补充一点，open 读取 CSV 后建议用 CSVLoader，如果是自定义逻辑也可以，拿到数据后直接存入 InMemoryVectorStore 并封装 as_retriever()，接入链中。
