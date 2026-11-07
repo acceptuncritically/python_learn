@@ -1,7 +1,5 @@
 from langchain_chroma import Chroma
 import config_data as config
-# ✅ 修正：不再使用已停止维护的 langchain_community.embeddings
-from langchain_openai import OpenAIEmbeddings
 
 
 class VectorStores:
@@ -23,13 +21,7 @@ class VectorStores:
 
 
 if __name__ == "__main__":
-    import os
-    ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY")
-    embeddings = OpenAIEmbeddings(
-        model="embedding-3",  # 智谱的嵌入模型
-        openai_api_key=ZHIPU_API_KEY,
-        openai_api_base="https://open.bigmodel.cn/api/paas/v4",
-    )
-    retriever = VectorStores(embeddings).get_retriever()
+    # 与 knowledge_base.py 入库时使用完全相同的向量模型配置
+    retriever = VectorStores(config.get_embeddings()).get_retriever()
     res = retriever.invoke("公司几点上班")
     print(res)

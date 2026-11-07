@@ -3,13 +3,10 @@ import hashlib
 
 # ❌ 原代码：from langchain_community.embeddings import OpenAIEmbeddings
 #    该模块官方已停止维护，导入时会不断报 DeprecationWarning。
-# ✅ 修正：改用官方独立包 langchain_openai（行为与原来完全一致）。
-from langchain_openai import OpenAIEmbeddings
+# ✅ 修正：向量模型统一由 config.get_embeddings() 创建（与 rag.py 检索共用同一套配置）。
 from langchain_text_splitters import RecursiveCharacterTextSplitter  # 递归文本分割器
 import config_data as config
 from langchain_chroma import Chroma
-
-ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY")
 
 # ❌ 原代码在这里创建了一个模块级 embeddings 变量，但从未被使用；
 #    只要 ZHIPU_API_KEY 没配好，import knowledge_base 就会直接报错。
@@ -51,11 +48,8 @@ class KnowledgeBase(object):
         os.makedirs(config.persist_directory, exist_ok=True)
         self.chroma = Chroma(
             collection_name=config.collection_name,
-            embedding_function=OpenAIEmbeddings(
-                model="embedding-3",  # 智谱的嵌入模型
-                openai_api_key=ZHIPU_API_KEY,
-                openai_api_base="https://open.bigmodel.cn/api/paas/v4",
-            ),
+            # ✅ 入库用的向量模型必须和 rag.py 检索时用的完全一致
+            embedding_function=config.get_embeddings(),
             persist_directory=config.persist_directory,  # 数据库本地存储文件夹
         )  # chroma向量库
         self.spliter = RecursiveCharacterTextSplitter(
