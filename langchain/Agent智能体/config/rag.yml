@@ -1,0 +1,3 @@
+model: deepseek-chat
+#要加一个空格
+embeddings_name: embedding-3
