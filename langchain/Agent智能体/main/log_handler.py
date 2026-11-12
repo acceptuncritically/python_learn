@@ -1,7 +1,7 @@
 import logging
 import os
 from datetime import datetime
-from path_tool import get_abs_path
+from main.path_tool import get_abs_path
 """
 1.保存日志所在位置的根目录,并确保根目录存在，如果不存在则创建在本文件的同级目录下
 2.保证日志格式
