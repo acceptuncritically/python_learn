@@ -1,3 +1,4 @@
 model: deepseek-chat
+temperature: 0.7
 #要加一个空格
 embeddings_name: embedding-3
