@@ -1,0 +1,11 @@
+collection_name: agent
+persist_direct: chroma_db
+k: 3
+data_path: data
+md5_hex_store: md5.txt
+allow_knowledge_file_type: [".txt", ".pdf"]
+allow_knowledge_path: E:\test1\PythonProject\python_learn\langchain\Agent智能体\file_content
+chunk_size: 200
+chunk_overlap: 20
+separator: ["\n\n","\n",".","!","。","?"]
+
