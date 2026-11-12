@@ -1,5 +1,5 @@
-import yamlfrom main.path_tool import get_abs_path
-
+from main.path_tool import get_abs_path
+import yaml
 def load_rag_config():
     with open(get_abs_path("config/rag.yml"), "r", encoding="utf-8") as f:
         return yaml.load(f, Loader=yaml.FullLoader)
