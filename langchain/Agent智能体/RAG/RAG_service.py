@@ -26,7 +26,6 @@ class RagSummaryService:
         for doc in context_docs:
             cnt+=1
             context+=f"参考消息{cnt}:{doc.page_content}"
-        print("context:",context)
         return self.chain.invoke({
             "input":query,
             "context":context,
@@ -34,4 +33,4 @@ class RagSummaryService:
         )
 if __name__ == '__main__':
     rag=RagSummaryService()
-    print(rag.rag_summarize("公司几点上班"))
+    print(rag.rag_summarize("宿舍多人，空间小 应该选择什么机器人"))
