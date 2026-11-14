@@ -44,7 +44,7 @@ def get_file_md5_hex(file_path):
 def pdf_loader(filepath:str,password:None):
     return PyPDFLoader(filepath,password).load()
 def text_loader(filepath:str):
-    return TextLoader(filepath).load()
+    return TextLoader(filepath,"utf-8").load()
 
 
 def listdir_with_allowed_type(path: str, allowed_types):
