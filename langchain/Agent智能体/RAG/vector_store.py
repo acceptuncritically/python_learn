@@ -106,11 +106,11 @@ class VectorStoreService:
 if __name__=="__main__":
     # 加上这三行调试
     from main.path_tool import get_abs_path
-    path = get_abs_path(chroma_config["allow_knowledge_path"])
-    print(f"配置的原始路径: {chroma_config['allow_knowledge_path']}")
-    print(f"解析后的绝对路径: {path}")
-    print(f"这个路径在电脑上存在吗?: {os.path.exists(path)}")
-    print(f"允许的文件类型: {chroma_config['allow_knowledge_file_type']}")
+    # path = get_abs_path(chroma_config["allow_knowledge_path"])
+    # print(f"配置的原始路径: {chroma_config['allow_knowledge_path']}")
+    # print(f"解析后的绝对路径: {path}")
+    # print(f"这个路径在电脑上存在吗?: {os.path.exists(path)}")
+    # print(f"允许的文件类型: {chroma_config['allow_knowledge_file_type']}")
 
     vs=VectorStoreService()
     vs.load_document()
