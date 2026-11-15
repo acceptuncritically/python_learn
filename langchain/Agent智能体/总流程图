@@ -1,0 +1,55 @@
+① 用户在网页输入一句话
+      app.py: st.chat_input()
+        │
+        ▼
+② ReactAgent.execute_stream(query, thread_id=...)
+      input   = {"messages": [本轮用户消息]}     ← 注意：只传本轮，历史靠记忆补
+      config  = {"thread_id": "chat-xxxx"}      ← "存档文件名"
+      context = {"report": False}               ← "报告模式开关"，每轮重置
+        │
+        ▼
+┌─────────────── LangGraph Agent 内核循环（本项目的发动机）───────────────┐
+│  每轮循环做三件事：                                                    │
+│   1) 模型前中间件：before_model 打日志、dynamic_prompt 选提示词          │
+│   2) 调大模型 deepseek-chat                                           │
+│   3) 看模型返回：                                                     │
+│        ├─ 有 tool_calls（模型说"我要用工具"）                          │
+│        │     → 行动：执行对应 Python 函数（wrap_tool_call 中间件打日志）│
+│        │     → 观察：函数返回值包成 ToolMessage，塞回对话              │
+│        │     → 回到第 1 步（模型再想一次）                             │
+│        └─ 没有 tool_calls（模型说"我可以答了"）                        │
+│              → 最终答案 AIMessage，循环结束                            │
+│                                                                        │
+│  每走一步，InMemorySaver 都按 thread_id 存一份完整对话（存档）           │
+└────────────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+③ execute_stream 把消息流"翻译"成 4 种事件：
+     thinking（思考）/ tool_call（行动）/ observation（观察）/ final（回答）
+        │
+        ▼
+④ app.py 渲染：
+     思考/行动/观察 → 塞进 st.status 折叠面板
+     最终回答      → st.write_stream 打字机效果逐字输出
+        │
+        ▼
+⑤ 把这轮问答追加进 session_state["message"]（下次页面刷新时重画历史）
+
+project/
+├── app.py                      # Streamlit 入口（只做 UI + 调 agent）
+├── config.py                   # 环境变量、常量
+├── model/
+│   └── factory.py              # chat_model 工厂
+├── prompts/
+│   ├── system.txt              # 普通模式系统提示词
+│   └── report.txt              # 报告模式系统提示词
+├── main/
+│   └── prompt_loader.py        # 加载提示词
+├── agent/
+│   ├── react_agent.py          # ReactAgent 类（组装 + execute_stream）
+│   └── tools/
+│       ├── agent_tools.py      # 工具函数集合
+│       └── middleware.py       # 中间件
+└── tests/
+    ├── test_tools.py
+    └── test_agent.py

@@ -20,7 +20,9 @@ python_learn/
 ├── langchain/               # LangChain 学习脚本（提示词、LCEL、记忆、RAG 组件）
 ├── coze/                    # Coze 平台与 AI Agent 概念笔记
 ├── 练习项目/                # 面向对象、爬虫、线性回归等综合练习
-├── 需要下载.py              # 依赖安装备注（pip 命令注释）
+├── requirements.txt         # 依赖清单（版本与本地 .venv 一致）
+├── .env.example             # API Key 环境变量模板
+├── 需要下载.py              # 早期的零散 pip 安装备注（已由 requirements.txt 替代）
 ├── LICENSE
 └── README.md
 ```
@@ -157,51 +159,44 @@ AI 伴侣类脚本需要联网并配置 `DEEPSEEK_API_KEY`；Streamlit 应用需
 
 ### 根目录其他文件
 
-- `需要下载.py`：以注释形式记录 pip 安装命令
+- `requirements.txt`：依赖清单，`pip install -r requirements.txt` 一键安装
+- `.env.example`：API Key 环境变量模板（自己填写，不要提交真实密钥）
+- `需要下载.py`：早期以注释形式记录的 pip 安装命令，保留作笔记
 - `LICENSE`：MIT License
 - `.venv/`：本地虚拟环境（未纳入版本控制）
-- `.idea/`：PyCharm 项目配置（当前未提交）
+- `.idea/`：PyCharm 项目配置（已在 `.gitignore` 中忽略）
 
 ## 环境与依赖
 
 - Python 3.13（本地 `.venv` 版本为 3.13.14）
-- 仓库没有提供 `requirements.txt`，依赖需要按需安装。根据代码中实际使用的库整理如下：
-
-基础与数据分析：
+- 依赖统一列在根目录 [`requirements.txt`](requirements.txt) 中，版本与本地 `.venv` 一致。推荐用虚拟环境安装：
 
 ```powershell
-pip install jupyter pandas matplotlib
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -U pip
+python -m pip install -r requirements.txt
 ```
 
-爬虫：
+`requirements.txt` 按用途分块，主要依赖如下：
+
+| 用途 | 主要依赖 |
+| --- | --- |
+| 数据分析与绘图（第五章） | `pandas`、`numpy`、`matplotlib`、`ipykernel` |
+| 网络请求与爬虫（第四章） | `requests`、`lxml` |
+| Web API（第六章 FastAPI） | `fastapi`、`uvicorn`、`pydantic` |
+| 大模型与 AI 应用（第三章） | `openai`、`streamlit` |
+| LangChain / LangGraph（`langchain/`） | `langchain`、`langchain-community`、`langchain-deepseek`、`langchain-openai`、`langchain-chroma`、`langgraph`、`chromadb`、`pypdf`、`PyYAML` |
+| 深度学习（`深度学习+pytorch/`） | `torch`、`scikit-learn` |
+
+可选依赖（没有写进 `requirements.txt`，需要时再单独安装）：
 
 ```powershell
-pip install requests lxml
-```
+# 想在命令行执行 jupyter notebook
+pip install jupyter
 
-大模型与 AI 应用：
-
-```powershell
-pip install openai streamlit
-pip install langchain langchain-community langchain-deepseek langchain-openai langchain-text-splitters pypdf jq
-```
-
-Web API：
-
-```powershell
-pip install fastapi uvicorn
-```
-
-深度学习：
-
-```powershell
-pip install torch numpy scikit-learn
-```
-
-语音克隆（仅 `第三章/AI应用/05 AI_partner 音频.py` 需要）：
-
-```powershell
-pip install librosa soundfile f5-tts
+# 语音克隆，仅 第三章/AI应用/05 AI_partner 音频.py 需要（体积较大）
+pip install f5-tts librosa soundfile
 ```
 
 ## 运行说明
@@ -220,6 +215,8 @@ $env:DEEPSEEK_API_KEY = "你的 DeepSeek API Key"
 $env:ZHIPU_API_KEY = "你的智谱 API Key"
 ```
 
+   脚本用 `os.getenv()` 读取系统环境变量，不会自动加载 `.env` 文件，`.env.example` 只是变量名模板。在 PyCharm 中也可以到 `Run` → `Edit Configurations` → `Environment variables` 里为单个脚本配置。
+
 3. 部分目录对工作目录有要求：
 
    - `第五章/` 的 Notebook 需要在 `第五章` 目录下启动 Jupyter，例如 `cd 第五章; jupyter notebook`
@@ -236,7 +233,7 @@ $env:ZHIPU_API_KEY = "你的智谱 API Key"
 
 - 这是一个个人学习仓库，代码按学习进度逐步补充，部分文件是纯注释笔记、空文件或未完成的草稿（例如 `算法详解/KMP算法.py`、`第六章/web AI汉字迷盒.py`），属于学习过程的一部分。
 - 部分爬虫和网络示例使用了硬编码地址或依赖站点页面结构，运行前需要根据实际情况调整；爬虫请遵守目标站点的 robots 协议和使用条款。
-- `*.py~` 是 PyCharm 自动生成的备份文件，可以忽略。
+- `*.py~` 是 PyCharm 自动生成的备份文件，已加入 `.gitignore`，可以忽略（历史提交里仍保留少量）。
 - 仓库中带有一些图片、视频和音频素材（第三章约 77 MB），克隆时仓库体积会稍大。
 
 ## License
