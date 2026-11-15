@@ -22,7 +22,9 @@ def monitor_tool(
         result=handler(request)
         logger.info(f"Tool call工具调用成功:{request.tool_call['name']}")
         if request.tool_call['name']=="fill_context_for_report":
-            request.runtime.context['report'] == True
+            # 【修复】原来写成了 ==（比较），导致报告标记永远写不进去；
+            # 这里必须用赋值，dynamic_prompt 才能读到 report=True 并切换报告提示词。
+            request.runtime.context['report'] = True
         return result
     except Exception as e:
         logger.error(f"Tool call {request.tool_call['name']}执行工具出错: {e}")

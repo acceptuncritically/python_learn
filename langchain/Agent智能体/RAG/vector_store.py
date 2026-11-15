@@ -12,7 +12,11 @@ class VectorStoreService:
         self.vector_store=Chroma(
             collection_name=chroma_config["collection_name"],
             embedding_function=embedding_model,
-            persist_directory=chroma_config["persist_direct"],
+            # 【关键修复】原来这里是相对路径 "chroma_db"，会随“当前工作目录”变化：
+            # 在项目根目录运行 app 时打开的是 Agent智能体/chroma_db（空库），
+            # 在 RAG 目录运行时打开的才是 RAG/chroma_db（真实知识库）。
+            # 改成基于项目根的绝对路径后，无论从哪里启动都指向同一个库。
+            persist_directory=get_abs_path(chroma_config["persist_direct"]),
         )
         self.spliter=RecursiveCharacterTextSplitter(
             chunk_size=chroma_config["chunk_size"],
