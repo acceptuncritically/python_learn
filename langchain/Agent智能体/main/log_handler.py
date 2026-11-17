@@ -61,4 +61,6 @@ def get_logger(
     logger.addHandler(file_handler)#将handler挂到logger上
     return logger
 logger = get_logger()
+# Logger 是类（模板），Logger() 是实例化（造一个对象），logger 是这个对象的变量名。
+# 后面 logger.info(...) 就是在用这个对象的方法。
 
