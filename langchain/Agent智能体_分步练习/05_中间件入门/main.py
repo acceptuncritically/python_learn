@@ -49,6 +49,10 @@ def my_before_model(state: AgentState, runtime: Runtime) -> None:
 @after_model
 def my_after_model(state: AgentState, runtime: Runtime) -> None:
     # 每次“模型返回之后”都执行，最后一条消息能看出模型想干嘛
+    """
+    当大模型返回结果后，框架会自动将这个结果封装成一个消息对象，
+    并 append（追加）到 state["messages"] 列表的末尾。
+    """
     last = state["messages"][-1]
     show("after_model", f"模型刚返回，最后一条是 {type(last).__name__}")
 
