@@ -48,27 +48,27 @@ def fetch_record(user_id: str) -> str:
 @wrap_tool_call
 def monitor_tool(request: ToolCallRequest, handler) -> ToolMessage:
     """原项目 monitor_tool：记录工具名和参数，成功后打开报告开关。"""
-    print(f"🛠  [monitor_tool] 调用工具 {request.tool_call['name']}，参数 {request.tool_call['args']}")
+    print(f"[monitor_tool] 调用工具 {request.tool_call['name']}，参数 {request.tool_call['args']}")
     result = handler(request)  # 真正执行工具
-    print(f"✅ [monitor_tool] 工具 {request.tool_call['name']} 执行成功")
+    print(f"[monitor_tool] 工具 {request.tool_call['name']} 执行成功")
     if request.tool_call["name"] == "fill_context_for_report":
         # 注意这里是赋值 = ！写成 == 就变成比较，开关永远打不开
         request.runtime.context["report"] = True
-        print("🔀 [monitor_tool] 已把 context['report'] 置为 True")
+        print("[monitor_tool] 已把 context['report'] 置为 True")
     return result
 
 @before_model
 def log_before_model(state: AgentState, runtime: Runtime) -> None:
     """原项目 log_before_model：每次调模型前，打印消息数 + 最后一条类型。"""
     last = state["messages"][-1]
-    print(f"📋 [log_before_model] 即将调用模型，带有 {len(state['messages'])} 条消息，最后一条是 {type(last).__name__}")
+    print(f"[log_before_model] 即将调用模型，带有 {len(state['messages'])} 条消息，最后一条是 {type(last).__name__}")
 
 @dynamic_prompt
 def report_prompt_switch(request: ModelRequest) -> str:
     """原项目 report_prompt_switch：每轮生成提示词前读 context 开关。"""
     is_report = request.runtime.context.get("report", False)
     who = "报告写手" if is_report else "主客服"
-    print(f"🧩 [report_prompt_switch] context['report']={is_report} → 本次使用【{who}】提示词")
+    print(f"[report_prompt_switch] context['report']={is_report} → 本次使用【{who}】提示词")
     return REPORT_PROMPT if is_report else MAIN_PROMPT
 
 # ============ 组装 Agent 并演示一次"生成报告" ============
