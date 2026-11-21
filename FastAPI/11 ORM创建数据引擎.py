@@ -1,5 +1,7 @@
 """
 使用create_async_engine创建异步引擎
+orm是一种编程技术，在面向对象编程和关系类数据库之间建立映射，
+无需编写SQL语句，通过操作对象的方式来与数据库进行交互
 """
 from sqlalchemy import func, DateTime, String, Float
 from sqlalchemy.ext.asyncio import create_async_engine
