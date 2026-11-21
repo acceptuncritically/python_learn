@@ -16,6 +16,9 @@ import os
 def get_project_root() -> str:
     """返回本关文件夹（存放 config.yml 的那个目录）的绝对路径。"""
     # __file__ 是当前 .py 文件的路径；abspath 把它变成绝对路径
+    # os.path.dirname()表示取目录部分，从字符串末尾往前找最后一个分隔符，把后半段砍掉,就是绝对路径中将当前文件名删去
+
+    # os.path.basename()表示取文件名部分，在绝对路径中将目录部分删去
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
     # 从当前文件所在目录开始，一层层往上找，谁有 config.yml 谁就是"项目根"
@@ -32,7 +35,7 @@ def get_project_root() -> str:
 
 def get_abs_path(relative_path: str) -> str:
     """把相对路径拼成基于项目根目录的绝对路径。"""
-    # normpath 把 "/" 统一成本系统的分隔符，Windows 下就是反斜杠
+    # os.path.join 拼出来的本来就用本机分隔符。normpath 真正的作用是规范化——清掉多余的斜杠、解析 . 和 ..
     return os.path.normpath(os.path.join(get_project_root(), relative_path))
 
 
