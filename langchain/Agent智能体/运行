@@ -1,0 +1,330 @@
+════════════════════════════════════════════════════════════════════
+ 运行 —— 一次提问的完整运行过程与流程（2026-11-19 实测整理）
+ 项目：langchain/Agent智能体        入口：app.py（Streamlit 网页）
+════════════════════════════════════════════════════════════════════
+
+【我写的提纲（原文保留）】
+用户输入问题->加入历史消息，将思考内容折叠->调用RAG链，
+将文本传入向量数据库，并搜索相似的内容
+
+
+────────────────────────────────────────────────────────────────────
+ 〇、先补一个前提：向量数据库里的东西是哪来的（离线建库）
+────────────────────────────────────────────────────────────────────
+运行时代码只负责"查"，库是之前"建"好的。建库流程（RAG/vector_store.py）：
+  data/ 目录（4 个 .txt）
+    -> listdir_with_allowed_type 按后缀过滤（.txt / .pdf）
+    -> 每个文件算 md5，与 md5.txt 比对：处理过就跳过（防止重复入库）
+    -> TextLoader("utf-8") 读成 Document
+    -> RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20) 切片
+    -> 每个分片用智谱 embedding-3 变成向量
+    -> 写入 Chroma 持久化库 RAG/chroma_db（collection = agent）
+
+本次实测：库里现有 67 个分片；md5.txt 里有 4 条记录（对应 4 个 txt）。
+复现命令（项目根目录）：python -m RAG.vector_store
+
+
+────────────────────────────────────────────────────────────────────
+ 一、全局：把上面提纲展开成一条完整的"运行链"
+────────────────────────────────────────────────────────────────────
+启动 app.py（Streamlit 网页）
+   │
+   ▼
+① 页面初始化：标题 / session_state / 渲染历史
+   │
+   ▼
+② 机器就位：ReactAgent（模型 + 7 个工具 + 3 个中间件 + 记忆）
+            + RAG 链（向量库 + 检索器 + 提示词 + 模型 + 输出解析器）
+   │
+   ▼
+③ 用户输入问题                                  app.py: st.chat_input()
+   │
+   ▼
+④ 加入历史消息，将思考内容折叠                   ← 我写的第二句
+   │  UI 层：session_state["message"] 追加本轮问题并显示
+   │  记忆层：本轮只传当前问题，旧历史由 InMemorySaver 按 thread_id 自动带回
+   ▼
+⑤ ReactAgent.execute_stream(query, thread_id)
+   │
+   ▼
+┌───────────────────── LangGraph Agent 内核循环 ──────────────────────┐
+│  before_model 打日志 → dynamic_prompt 选提示词 → 调 deepseek-chat   │
+│    ├─ 有 tool_calls（模型说"我要用工具"）                            │
+│    │     → monitor_tool 打日志 → 执行工具（如 rag_summarize）        │
+│    │     → 返回值包成 ToolMessage（观察）塞回对话 → 再想一次           │
+│    └─ 无 tool_calls（模型说"我可以答了"）                            │
+│          → 最终答案 AIMessage，循环结束                             │
+│  每走一步，InMemorySaver 都按 thread_id 存一份完整对话（存档）         │
+└─────────────────────────────────────────────────────────────────────┘
+   │
+   ▼
+⑥ 调用 RAG 链（工具 rag_summarize 内部）          ← 我写的第三句
+   query 文本
+     → 智谱 embedding-3 把文本转成向量
+     → 传入/查询 Chroma 向量库（collection=agent，67 个分片）
+     → 相似度搜索 top 5 → 5 段参考资料
+     → 拼成 context → 填进 rag_summarize 提示词
+     → deepseek-chat 总结 → StrOutputParser → 纯字符串
+     → 包成 ToolMessage（观察）回到内核循环
+   │
+   ▼
+⑦ execute_stream 把消息流"翻译"成 4 种事件：
+     thinking（思考）/ tool_call（行动）/ observation（观察）/ final（回答）
+   │
+   ▼
+⑧ 渲染：思考/行动/观察 → 塞进 st.status 折叠面板
+        最终回答 → st.write_stream 打字机逐字输出
+   │
+   ▼
+⑨ 收尾：本轮问答写入 session_state["message"]（下次页面刷新时重画历史）；
+        整轮对话留在 InMemorySaver 存档里
+        → 下一轮从 ③ 再来，历史自动接上
+
+
+────────────────────────────────────────────────────────────────────
+ 二、逐步细看：从"启动"到"回答"到底发生了什么
+────────────────────────────────────────────────────────────────────
+
+【启动阶段】
+
+1) 启动网页
+   命令：python -m streamlit run app.py
+   Streamlit 起一个本地 Web 服务（本次实测 http://localhost:8501），
+   app.py 整个脚本在每次页面交互时从上到下重新执行一遍。
+
+2) 页面初始化（app.py 顶部）
+   st.set_page_config(page_title="机器人客服") / st.title / st.divider()
+   if "agent" not in session_state: new_agent()
+     -> ReactAgent() 新建
+     -> thread_id = "chat-" + 8 位随机十六进制        # 会话 ID
+   if "message" not in session_state: message = []    # 页面显示用的历史
+   侧边栏：显示会话 ID；"清空对话"按钮 -> new_agent() + message=[] + rerun
+
+3) 建 Agent 和 RAG 链（注意：RAG 链在 import 时就建好了）
+   agent/react_agent.py  ReactAgent.__init__():
+     self.checkpointer = InMemorySaver()             # 多轮记忆存档器
+     create_agent(
+         model=chat_model,                           # ChatDeepSeek(deepseek-chat, 0.7)
+         system_prompt=load_system_prompts(),        # prompts/main_prompt.txt
+         tools=[7 个工具],
+         middleware=[monitor_tool, log_before_model, report_prompt_switch],
+         checkpointer=self.checkpointer)             # 开启多轮记忆
+
+   而 agent/tools/agent_tools.py 第 11 行是模块级代码：
+     rag = RagSummaryService()
+   import 这个模块时就会执行，所以 RAG 链在页面刚加载时就已经建好：
+     VectorStoreService()
+       -> Chroma(collection_name="agent",
+                 embedding_function=embedding_model,        # 智谱 embedding-3
+                 persist_directory=RAG/chroma_db)           # 绝对路径，不随工作目录变
+       -> RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20)
+     self.retriever = get_retriever()                          # k = 5
+     self.prompt_template = PromptTemplate.from_template(
+         prompts/rag_summarize.txt)                            # {input} {context}
+     self.chain = 提示词 | ChatDeepSeek | StrOutputParser()    # 这就是"RAG链"
+
+4) 渲染历史消息
+   for message in session_state["message"]:
+       st.chat_message(message["role"]).markdown(message["content"])
+   注：这里只重画用户问题和最终回答，思考过程不在其中（见第 14 步）。
+
+5) 等待用户输入（st.chat_input 在没输入时返回 None，脚本结束）
+
+
+【一轮问答阶段】
+
+6) 用户输入问题
+   app.py:  prompt = st.chat_input()
+
+7) 加入历史消息（两层，别混淆）
+   ① UI 历史：session_state["message"].append({"role":"user","content":prompt})
+      并立刻 with st.chat_message("user"): st.markdown(prompt) 显示出来。
+   ② 模型记忆：execute_stream 只把"本轮这一条"用户消息放进 input，
+      旧对话不在这里拼，而是由 InMemorySaver 按 thread_id 自动恢复（第 5 步）。
+      input_dict = {"messages":[{"role":"user","content":query}]}
+      config     = {"configurable":{"thread_id":"chat-xxxx"}}      # 存档文件名
+      context    = {"report": False}                              # 报告模式开关，每轮重置
+
+8) 调用 Agent：ReactAgent.execute_stream(query, thread_id)
+   agent/react_agent.py:
+     for chunk in self.agent.stream(input_dict,
+                                    stream_mode="values",     # 每一帧都是完整消息列表
+                                    config=config,
+                                    context={"report": False}):
+   第一帧 = "历史消息 + 本轮用户消息"（第一轮就是 1 条；第二轮是 5 条），
+   先跳过不输出（避免把历史重复打印）：
+     if seen is None: seen = len(messages); continue
+   之后每个新帧只处理 [seen:] 里新增的消息，逐条翻译成事件（第 11 步）。
+
+9) LangGraph 内核循环（本项目真正干活的地方）
+   每一轮模型调用前：
+     - log_before_model：记录"即将调用模型，带有 N 条信息"并打印最后一条消息类型
+     - report_prompt_switch：读 runtime.context["report"]
+          False -> load_system_prompts()   (prompts/main_prompt.txt)
+          True  -> load_report_prompts()   (prompts/report_prompt.txt)
+   然后调 deepseek-chat。模型返回：
+     - 有 tool_calls：先输出自然语言"思考"，再给出工具名和入参；
+         进入工具节点，wrap_tool_call 中间件 monitor_tool 打日志（工具名、入参、成功/失败），
+         执行对应 Python 函数；结果包成 ToolMessage（name=工具名）追加到消息列表；
+         回到 before_model，再想一次。
+     - 没有 tool_calls：这条 AIMessage 就是最终回答，循环结束。
+   每走一步，checkpointer 都把完整消息列表按 thread_id 存一份。
+
+10) 调用 RAG 链（本轮模型选了 rag_summarize）
+    工具函数（agent_tools.py:44）：
+      @tool(description="从向量存储中检索参考资料")
+      def rag_summarize(query): return rag.rag_summarize(query)
+   进入 RAG/RAG_service.py 的 rag_summarize(query)：
+
+   10.1 检索：docs = self.retriever.invoke(query)
+        retriever = Chroma.as_retriever(search_kwargs={"k":5})
+   10.2 向量化：query 文本先交给智谱 ZhipuAIEmbeddings(model="embedding-3")
+        变成一条向量（这一步由 Chroma 在检索时自动完成）。
+   10.3 传进向量数据库查询：
+        在 Chroma 库 collection=agent 的 67 个分片里，按向量相似度比较，
+        返回最相似的 5 个 Document（本次实测：选购指南.txt ×1、日常维护.txt ×4）。
+   10.4 拼参考资料：
+        context = "参考消息1:..." + "参考消息2:..." + ... 共 5 段
+   10.5 填提示词：
+        chain.invoke({"input": query, "context": context})
+        提示词模板 prompts/rag_summarize.txt 里的 {input}、{context} 被替换，
+        并约束模型"只基于参考资料、纯文本、不编造"。
+   10.6 总结：deepseek-chat 读"问题 + 5 段资料"，输出一段概括回答。
+   10.7 解析：StrOutputParser() 把模型输出转成纯字符串。
+   10.8 返回：这个字符串就是工具返回值，被 LangGraph 包成
+        ToolMessage(name="rag_summarize", content="...")，即前端看到的"观察"。
+   一句话账：本次一问一答 = deepseek-chat 调用 3 次
+        （Agent 决定用工具 1 次 + Agent 最终回答 1 次 + RAG 总结 1 次）
+        + embedding-3 调用 1 次 + 向量检索 1 次。
+
+11) execute_stream 把消息流翻译成 4 种事件
+    agent/react_agent.py 对新增消息做类型判断：
+      AIMessage 且有 tool_calls -> 先 yield thinking（content），再逐个 yield tool_call
+      AIMessage 且无 tool_calls -> yield final（content）
+      ToolMessage              -> yield observation（name + content）
+    前端拿到的就是一条条 {"type":..., "content":...} 事件。
+
+12) app.py 渲染：思考内容折叠 + 最终回答打字机
+      with st.chat_message("assistant"):
+          status = st.status("🤔 正在思考…", expanded=True)   # 一开始展开
+          循环事件：
+            thinking    -> st.markdown("🧠 **思考**：...")
+            tool_call   -> st.markdown("🛠 **行动**：调用工具 `xxx`，入参 `{...}`")
+            observation -> st.caption("👀 **观察**（工具名）：内容（超 400 字截断）")
+            final       -> 记下 final_text 并 break
+      思考结束：
+          status.update(label="思考完成（点击展开思考过程）",
+                        state="complete", expanded=False)    # 自动折叠成一行
+      没拿到 final 的兜底：
+          final_text = "抱歉，本次没有生成有效回复，请换个问法重试。"
+          status.update(label="⚠️ 思考完成，但未生成回复", state="error", expanded=False)
+      最终回答：st.write_stream(typewriter(final_text, delay=0.01)) 逐字输出。
+
+13) 收尾：写入 UI 历史
+      session_state["message"].append({"role":"assistant","content":final_text})
+      注意这里没有 st.rerun()，历史靠 session_state 在下次 rerun 时重画。
+
+
+【下一轮】
+
+14) 第二轮只传新问题，历史自动接上
+    同一个 thread_id 再问一句，execute_stream 的 input 依旧只有这一条新消息；
+    LangGraph 从 InMemorySaver 里把该 thread_id 的完整对话取回来，
+    第一帧就是"上一轮全部消息 + 本轮新消息"，被 seen 跳过，前端不会重复显示。
+    本次实测（同一 thread_id 连问"扫地机器人如何保养" / "那滤网多久换一次？"）：
+      第一轮结束 messages = 4   (Human / AI要工具 / Tool / AI最终)
+      第二轮开始 before_model = 5   (上一轮 4 条 + 本轮 Human)
+      工具执行后 before_model = 7  (再 + AI要工具 / Tool)
+      第二轮结束 messages = 8   (再 + AI最终)
+    另注意：页面重画历史时 session_state 里只有"问题/最终回答"两条，
+    思考面板不会重画；思考过程只在当轮 st.status 里看得到，折叠后也只在当轮可展开。
+    "清空对话"按钮 -> new_agent() + 新 thread_id -> 记忆和页面历史一起清空。
+
+
+【报告模式分支（同一条内核循环，不是 RAG 主流程）】
+    用户明确要"生成/查询个人使用报告"时：
+      模型先调 fill_context_for_report 工具
+      -> monitor_tool 执行后把 request.runtime.context["report"] = True
+      -> 下一次 dynamic_prompt 发现 report=True，改用 prompts/report_prompt.txt
+      -> 再按系统提示词依次调 get_user_id / get_current_month / fetch_external_data
+      -> 数据齐全后生成报告。
+
+
+【异常与边界】
+    - 工具执行出错：monitor_tool 记录 error 日志并把异常抛出去。
+    - 没有最终回答：app.py 显示兜底话术，status 标 error 并折叠。
+    - 模型连续调工具 5 次仍信息不足：系统提示词要求直接回复"我不知道"。
+    - 换工作目录启动：配置里的路径都走 main/path_tool.get_abs_path 以项目根为准，
+      Chroma 指向固定的 RAG/chroma_db，不会因为 cwd 不同而连到空库。
+
+
+────────────────────────────────────────────────────────────────────
+ 三、本次实际运行记录（按时间，作为上面流程的证据）
+────────────────────────────────────────────────────────────────────
+1) 启动（20:20:42）：python -m streamlit run app.py --server.headless=true
+   -> Uvicorn server started on :::8501，Local URL http://localhost:8501
+   -> 页面请求返回 HTTP 200，标题"机器人客服"。
+
+2) 页面初始（AppTest 无头实测）：标题、Divider、1 个 chat_input、无异常；
+   会话 ID：chat-cd4e00e9。
+
+3) 模拟网页提问"扫地机器人如何保养"（20:21:13 ~ 20:21:17）：
+   20:21:13.626  [before_model] 即将调用模型，带有 1 条信息
+                 HumanMessage|扫地机器人如何保养
+   20:21:15.233  [monitor_tool] 执行工具 rag_summarize
+                 入参 {'query': '扫地机器人日常保养维护方法'}
+   20:21:17.740  [monitor_tool] rag_summarize 调用成功
+   20:21:17.742  [before_model] 即将调用模型，带有 3 条信息
+                 ToolMessage|扫地机器人日常保养维护方法包括：……
+
+4) 页面元素实际顺序（AppTest 抓取）：
+   Title(机器人客服) -> Divider -> ChatMessage(user) -> Markdown(问题)
+   -> ChatMessage(assistant) -> Status
+      -> Markdown("🧠 **思考**：用户问的是扫地机器人的保养方法……")
+      -> Markdown("🛠 **行动**：调用工具 `rag_summarize`，入参 `{'query': '扫地机器人日常保养维护方法'}`")
+      -> Caption("👀 **观察**（rag_summarize）：……")
+   -> Markdown(最终回答："扫地机器人的保养主要分为日常、每周、每月、每季度四个层次……")
+
+5) 本轮结束后的 session_state：
+   message  = [ {"role":"user","content":"扫地机器人如何保养"},
+                {"role":"assistant","content":"扫地机器人的保养主要分为……"} ]
+   thread_id = chat-cd4e00e9
+
+6) RAG 内部取证（独立探针脚本）：
+   Chroma collection = agent，count = 67
+   retriever.invoke("扫地机器人日常保养维护方法") -> 5 条：
+     doc1  data/选购指南.txt   （"扫地机器人选购指南"）
+     doc2  data/日常维护.txt   （"扫地机器人维护保养指南 一、日常维护……"）
+     doc3  data/日常维护.txt   （"三、每月维护……"）
+     doc4  data/日常维护.txt   （"四、每季度维护……"）
+     doc5  data/日常维护.txt   （"二、每周维护……"）
+   RAG 链输出前 200 字："扫地机器人日常保养维护方法包括：每次清扫后清空尘盒……"
+   （链路本身可用：python -m RAG.RAG_service 也能直接跑通并打印总结）
+
+7) 多轮记忆取证：第一轮 messages=4，第二轮 messages=8（见第 14 步）；
+   日志中 [before_model] 的条数 1 -> 3 -> 5 -> 7，与消息增长完全一致。
+
+8) 本次运行日志：log/agent_2026-11-19.log（20:19:34 ~ 20:21:17 的记录）。
+
+
+────────────────────────────────────────────────────────────────────
+ 四、运行方式（复现用）
+────────────────────────────────────────────────────────────────────
+环境变量（本机已配置在"用户环境变量"里）：
+  DEEPSEEK_API_KEY  —— Agent 和 RAG 总结使用的 deepseek-chat
+  ZHIPU_API_KEY     —— 向量化使用的 embedding-3
+命令（都在项目根目录 Agent智能体 下执行；用 python -m 方式，import 才找得到包）：
+  建/更新知识库： python -m RAG.vector_store
+  只跑 RAG 链：   python -m RAG.RAG_service
+  命令行跑 Agent：python -m agent.react_agent
+  网页运行：      python -m streamlit run app.py
+
+
+────────────────────────────────────────────────────────────────────
+ 五、一句话总结
+────────────────────────────────────────────────────────────────────
+用户问题进来后，先"加入/显示历史消息"，再由 LangGraph 内核带着 7 个工具反复"想—做—看"；
+当模型决定调用 rag_summarize 时，RAG 链把问题向量化、去 Chroma 里找最像的 5 段资料，
+让 deepseek 先总结成一段参考文字，这段文字以"观察"身份回到对话里，模型再据此生成最终回答；
+前端把思考/行动/观察塞进一个会自动折叠的 status 面板，最终回答用打字机逐字输出，
+最后把问答写进 session_state 历史、整轮对话留在 InMemorySaver 存档里，供下一轮自动接上。
